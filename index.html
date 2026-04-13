@@ -8,7 +8,7 @@
     <style>
       body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; }
 
-      #introScreen, #levelIntro, #loadingScreen, #gameOver {
+      #introScreen, #loadingScreen, #gameOver {
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
         display: flex; flex-direction: column; justify-content: center; align-items: center;
         text-align: center; z-index: 300;
@@ -18,30 +18,8 @@
       #introScreen .player-info { font-size: 28px; margin: 15px 0; opacity: 0.9; }
       #introScreen .subtitle { font-size: 22px; margin-top: 40px; opacity: 0.7; }
 
-      #levelIntro { background: rgba(0,0,0,0.92); transition: opacity 1.2s ease-out; }
-      #levelIntro h2 { font-size: 80px; margin: 0; letter-spacing: 8px; }
-      #levelIntro p { font-size: 28px; margin-top: 20px; opacity: 0.85; }
-      #levelIntro.level1 { color: #4CAF50; }
-      #levelIntro.level1 h2 { text-shadow: 0 0 40px #4CAF50; }
-      #levelIntro.level2 { color: #ffcc00; }
-      #levelIntro.level2 h2 { text-shadow: 0 0 40px #ff5733; }
-
       #loadingScreen { background-color: rgba(0,0,0,0.85); color: white; }
       #gameOver { background-color: rgba(0,0,0,0.9); color: white; }
-
-      #info {
-        position: absolute; top: 10px; left: 10px; color: white;
-        background-color: rgba(0,0,0,0.6); padding: 10px 15px;
-        border-radius: 5px; font-size: 18px; z-index: 100; display: flex; gap: 20px;
-      }
-      #muteBtn {
-        position: absolute; top: 10px; right: 10px; z-index: 100;
-        background: rgba(0,0,0,0.6); color: white; border: none; padding: 8px 14px;
-        border-radius: 5px; cursor: pointer; font-size: 16px;
-      }
-      button { background-color: #4CAF50; border: none; color: white; padding: 14px 40px; font-size: 22px; margin-top: 30px; cursor: pointer; border-radius: 8px; }
-      .spinner { border: 6px solid rgba(255,255,255,0.3); border-top: 6px solid white; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-top: 20px; }
-      @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
   </head>
   <body>
@@ -60,22 +38,9 @@
       <div class="subtitle">Survive as long as you can...</div>
     </div>
 
-    <!-- 2D Level Intro (still kept for desktop fallback) -->
-    <div id="levelIntro" style="display:none">
-      <h2 id="levelTitle">LEVEL 1</h2>
-      <p id="levelSubtitle">SURVIVE 30 SECONDS</p>
-    </div>
-
-    <!-- Desktop UI -->
-    <div id="info">
-      <span>Level <span id="levelNum">1</span></span>
-      <span>Time: <span id="time">0</span>s</span>
-    </div>
-    <button id="muteBtn">🔊 Music On</button>
-
     <div id="gameOver" style="display:none">
       <h2>Game Over!</h2>
-      <p>You reached <span id="finalLevel">Level 1</span> and survived <span id="finalTime">0</span> seconds.</p>
+      <p>You reached Level <span id="finalLevel">1</span> and survived <span id="finalTime">0</span> seconds.</p>
       <button onclick="restartGame()">Play Again</button>
     </div>
 
@@ -100,10 +65,10 @@
             <a-text id="hudTime" value="Time: 0.0s" color="#ffffff" position="0.45 0.2 0.01" align="right" width="0.8"></a-text>
           </a-entity>
 
-          <!-- VR Level Start Hint -->
+          <!-- Level Start Hint -->
           <a-entity id="vrLevelHint" position="0 1.2 -2.5" visible="false">
-            <a-plane width="2" height="0.8" color="#000000" opacity="0.7" position="0 0 0"></a-plane>
-            <a-text id="vrHintText" value="LEVEL 1\nSURVIVE 30 SECONDS" color="#4CAF50" align="center" width="1.8" position="0 0.1 0.01"></a-text>
+            <a-plane width="2.2" height="0.9" color="#000000" opacity="0.75" position="0 0 0"></a-plane>
+            <a-text id="vrHintText" value="LEVEL 1\nSURVIVE 30 SECONDS" color="#4CAF50" align="center" width="1.9" position="0 0.1 0.01"></a-text>
           </a-entity>
         </a-entity>
       </a-entity>
@@ -115,7 +80,7 @@
       <a-light type="directional" color="#FFF" intensity="0.8" position="-1 3 2"></a-light>
     </a-scene>
 
-    <!-- LEVEL 2 SCENE -->
+    <!-- LEVEL 2 SCENE (same structure) -->
     <a-scene id="scene2" physics="debug: false" loading-screen="enabled: false" 
              vr-mode-ui="enabled: true" style="display:none">
       <a-assets>
@@ -128,18 +93,15 @@
         <a-entity id="carVisual" gltf-model="#carModel" scale="2 2 2" position="0 0.4 1.8" rotation="0 90 0"></a-entity>
         <a-entity position="0 0.3 2.75">
           <a-camera look-controls="pointerLockEnabled: true"></a-camera>
-          
-          <!-- 3D HUD -->
           <a-entity id="hud" position="0 0.8 -1.5">
             <a-plane width="1.2" height="0.3" color="#000000" opacity="0.6" position="0 0.2 0"></a-plane>
             <a-text id="hudLevel" value="LEVEL 2" color="#ffcc00" position="-0.45 0.2 0.01" align="left" width="0.8"></a-text>
             <a-text id="hudTime" value="Time: 0.0s" color="#ffffff" position="0.45 0.2 0.01" align="right" width="0.8"></a-text>
           </a-entity>
 
-          <!-- VR Level Start Hint -->
           <a-entity id="vrLevelHint" position="0 1.2 -2.5" visible="false">
-            <a-plane width="2" height="0.8" color="#000000" opacity="0.7" position="0 0 0"></a-plane>
-            <a-text id="vrHintText" value="LEVEL 2\nHARDER MODE" color="#ffcc00" align="center" width="1.8" position="0 0.1 0.01"></a-text>
+            <a-plane width="2.2" height="0.9" color="#000000" opacity="0.75" position="0 0 0"></a-plane>
+            <a-text id="vrHintText" value="LEVEL 2\nHARDER MODE" color="#ffcc00" align="center" width="1.9" position="0 0.1 0.01"></a-text>
           </a-entity>
         </a-entity>
       </a-entity>
@@ -173,12 +135,8 @@
       const roadSpeed = 0.38;
       const turnSpeed = 0.22;
 
-      const infoLevel = document.getElementById('levelNum');
-      const infoTime = document.getElementById('time');
-      const levelIntro = document.getElementById('levelIntro');
-      const loadingScreen = document.getElementById('loadingScreen');
       const introScreen = document.getElementById('introScreen');
-      const muteBtn = document.getElementById('muteBtn');
+      const loadingScreen = document.getElementById('loadingScreen');
       const gameOverScreen = document.getElementById('gameOver');
 
       const bgMusic = document.getElementById('bgMusic');
@@ -193,12 +151,6 @@
         loseSound.src = "loseSound.mp3";
         bgMusic.volume = 0.65;
       }
-
-      muteBtn.addEventListener('click', () => {
-        musicMuted = !musicMuted;
-        bgMusic.muted = musicMuted;
-        muteBtn.textContent = musicMuted ? "🔇 Music Off" : "🔊 Music On";
-      });
 
       function startGameFlow() {
         loadingScreen.style.display = 'flex';
@@ -240,24 +192,10 @@
         setTimeout(() => {
           loadingScreen.style.display = 'none';
           showVRLevelHint("LEVEL 1\nSURVIVE 30 SECONDS", "#4CAF50");
-          showLevel1Intro();
+          gameActive = true;
+          bgMusic.play().catch(() => {});
+          updateGame();
         }, 600);
-      }
-
-      function showLevel1Intro() {
-        levelIntro.classList.add('level1');
-        levelIntro.style.display = 'flex';
-
-        setTimeout(() => {
-          levelIntro.style.opacity = '0';
-          setTimeout(() => {
-            levelIntro.style.display = 'none';
-            levelIntro.style.opacity = '1';
-            gameActive = true;
-            bgMusic.play().catch(() => {});
-            updateGame();
-          }, 1200);
-        }, 2800);
       }
 
       function transitionToLevel2() {
@@ -285,7 +223,7 @@
           showVRLevelHint("LEVEL 2\nHARDER MODE", "#ffcc00");
           gameActive = true;
           updateGame();
-        }, 800);
+        }, 600);
       }
 
       function showVRLevelHint(text, color) {
@@ -420,21 +358,26 @@
         if (!gameActive) return;
 
         time += 0.016;
-        infoTime.textContent = time.toFixed(1);
         if (hudTime) hudTime.setAttribute('value', `Time: ${time.toFixed(1)}s`);
         if (hudLevel) hudLevel.setAttribute('value', `LEVEL ${currentLevel}`);
 
         const carPos = currentCar.getAttribute('position');
         const camera = currentScene.querySelector('a-camera');
-        const cameraObj = camera.object3D;
-        const yaw = -cameraObj.rotation.y * (180 / Math.PI);
 
-        const moveX = Math.sin(yaw * Math.PI / 180) * turnSpeed;
+        // === RELIABLE YAW FOR BOTH DESKTOP AND VR ===
+        let yawDegrees = 0;
+        if (camera.object3D) {
+          yawDegrees = -camera.object3D.rotation.y * (180 / Math.PI);
+        }
+
+        const yawRad = yawDegrees * (Math.PI / 180);
+        const moveX = Math.sin(yawRad) * turnSpeed;
 
         carPos.x += moveX;
         carPos.x = Math.max(-9, Math.min(9, carPos.x));
         currentCar.setAttribute('position', carPos);
 
+        // Car visual rotation
         if (currentCarVisual) {
           let targetRotation = 90;
           if (Math.abs(moveX) > 0.001) {
@@ -476,16 +419,28 @@
         gameActive = false;
 
         const sceneEl = currentScene;
-        const vrGameOverText = document.createElement('a-text');
-        vrGameOverText.setAttribute('value', 'GAME OVER\nExit VR to restart');
-        vrGameOverText.setAttribute('color', '#ff4444');
-        vrGameOverText.setAttribute('align', 'center');
-        vrGameOverText.setAttribute('width', '2.2');
-        vrGameOverText.setAttribute('position', '0 1.4 -2.5');
-        sceneEl.appendChild(vrGameOverText);
+        const vrGameOver = document.createElement('a-entity');
+        vrGameOver.setAttribute('position', '0 1.4 -2.5');
+
+        const bg = document.createElement('a-plane');
+        bg.setAttribute('width', '2.4');
+        bg.setAttribute('height', '1.1');
+        bg.setAttribute('color', '#000000');
+        bg.setAttribute('opacity', '0.85');
+        vrGameOver.appendChild(bg);
+
+        const text = document.createElement('a-text');
+        text.setAttribute('value', 'GAME OVER\nExit VR to restart');
+        text.setAttribute('color', '#ff4444');
+        text.setAttribute('align', 'center');
+        text.setAttribute('width', '2.0');
+        text.setAttribute('position', '0 0.1 0.01');
+        vrGameOver.appendChild(text);
+
+        sceneEl.appendChild(vrGameOver);
 
         document.getElementById('finalTime').textContent = time.toFixed(1);
-        document.getElementById('finalLevel').textContent = `Level ${currentLevel}`;
+        document.getElementById('finalLevel').textContent = currentLevel;
         gameOverScreen.style.display = 'flex';
       }
 
