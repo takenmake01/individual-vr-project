@@ -60,13 +60,13 @@
       <div class="subtitle">Survive as long as you can...</div>
     </div>
 
-    <!-- Level Intro -->
+    <!-- 2D Level Intro (still kept for desktop fallback) -->
     <div id="levelIntro" style="display:none">
       <h2 id="levelTitle">LEVEL 1</h2>
       <p id="levelSubtitle">SURVIVE 30 SECONDS</p>
     </div>
 
-    <!-- Game UI (desktop only) -->
+    <!-- Desktop UI -->
     <div id="info">
       <span>Level <span id="levelNum">1</span></span>
       <span>Time: <span id="time">0</span>s</span>
@@ -93,11 +93,17 @@
         <a-entity position="0 0.3 2.75">
           <a-camera look-controls="pointerLockEnabled: true"></a-camera>
           
-          <!-- 3D HUD (visible in VR + desktop) -->
-          <a-entity id="hud" position="0 0.8 -1.5" rotation="0 0 0">
+          <!-- 3D HUD -->
+          <a-entity id="hud" position="0 0.8 -1.5">
             <a-plane width="1.2" height="0.3" color="#000000" opacity="0.6" position="0 0.2 0"></a-plane>
             <a-text id="hudLevel" value="LEVEL 1" color="#4CAF50" position="-0.45 0.2 0.01" align="left" width="0.8"></a-text>
             <a-text id="hudTime" value="Time: 0.0s" color="#ffffff" position="0.45 0.2 0.01" align="right" width="0.8"></a-text>
+          </a-entity>
+
+          <!-- VR Level Start Hint -->
+          <a-entity id="vrLevelHint" position="0 1.2 -2.5" visible="false">
+            <a-plane width="2" height="0.8" color="#000000" opacity="0.7" position="0 0 0"></a-plane>
+            <a-text id="vrHintText" value="LEVEL 1\nSURVIVE 30 SECONDS" color="#4CAF50" align="center" width="1.8" position="0 0.1 0.01"></a-text>
           </a-entity>
         </a-entity>
       </a-entity>
@@ -109,7 +115,7 @@
       <a-light type="directional" color="#FFF" intensity="0.8" position="-1 3 2"></a-light>
     </a-scene>
 
-    <!-- LEVEL 2 SCENE (identical structure) -->
+    <!-- LEVEL 2 SCENE -->
     <a-scene id="scene2" physics="debug: false" loading-screen="enabled: false" 
              vr-mode-ui="enabled: true" style="display:none">
       <a-assets>
@@ -122,10 +128,18 @@
         <a-entity id="carVisual" gltf-model="#carModel" scale="2 2 2" position="0 0.4 1.8" rotation="0 90 0"></a-entity>
         <a-entity position="0 0.3 2.75">
           <a-camera look-controls="pointerLockEnabled: true"></a-camera>
-          <a-entity id="hud" position="0 0.8 -1.5" rotation="0 0 0">
+          
+          <!-- 3D HUD -->
+          <a-entity id="hud" position="0 0.8 -1.5">
             <a-plane width="1.2" height="0.3" color="#000000" opacity="0.6" position="0 0.2 0"></a-plane>
             <a-text id="hudLevel" value="LEVEL 2" color="#ffcc00" position="-0.45 0.2 0.01" align="left" width="0.8"></a-text>
             <a-text id="hudTime" value="Time: 0.0s" color="#ffffff" position="0.45 0.2 0.01" align="right" width="0.8"></a-text>
+          </a-entity>
+
+          <!-- VR Level Start Hint -->
+          <a-entity id="vrLevelHint" position="0 1.2 -2.5" visible="false">
+            <a-plane width="2" height="0.8" color="#000000" opacity="0.7" position="0 0 0"></a-plane>
+            <a-text id="vrHintText" value="LEVEL 2\nHARDER MODE" color="#ffcc00" align="center" width="1.8" position="0 0.1 0.01"></a-text>
           </a-entity>
         </a-entity>
       </a-entity>
@@ -148,7 +162,7 @@
       let currentLevel = 1;
       let roadSegments = [];
       let decorations = [];
-      let currentScene, currentCar, currentRoad, currentCarVisual, hudLevel, hudTime;
+      let currentScene, currentCar, currentRoad, currentCarVisual, hudLevel, hudTime, vrLevelHint, vrHintText;
       let lastRowHadBuildings = false;
 
       const segmentLength = 15;
@@ -162,11 +176,10 @@
       const infoLevel = document.getElementById('levelNum');
       const infoTime = document.getElementById('time');
       const levelIntro = document.getElementById('levelIntro');
-      const levelTitle = document.getElementById('levelTitle');
-      const levelSubtitle = document.getElementById('levelSubtitle');
       const loadingScreen = document.getElementById('loadingScreen');
       const introScreen = document.getElementById('introScreen');
       const muteBtn = document.getElementById('muteBtn');
+      const gameOverScreen = document.getElementById('gameOver');
 
       const bgMusic = document.getElementById('bgMusic');
       const winSound = document.getElementById('winSound');
@@ -216,6 +229,8 @@
         currentCarVisual = currentCar.querySelector('#carVisual');
         hudLevel = currentScene.querySelector('#hudLevel');
         hudTime = currentScene.querySelector('#hudTime');
+        vrLevelHint = currentScene.querySelector('#vrLevelHint');
+        vrHintText = currentScene.querySelector('#vrHintText');
 
         currentScene.style.display = 'block';
         initRoad();
@@ -224,13 +239,12 @@
 
         setTimeout(() => {
           loadingScreen.style.display = 'none';
+          showVRLevelHint("LEVEL 1\nSURVIVE 30 SECONDS", "#4CAF50");
           showLevel1Intro();
         }, 600);
       }
 
       function showLevel1Intro() {
-        levelTitle.textContent = "LEVEL 1";
-        levelSubtitle.textContent = "SURVIVE 30 SECONDS";
         levelIntro.classList.add('level1');
         levelIntro.style.display = 'flex';
 
@@ -250,11 +264,6 @@
         gameActive = false;
         winSound.play().catch(() => {});
 
-        levelTitle.textContent = "LEVEL 2";
-        levelSubtitle.textContent = "HARDER MODE";
-        levelIntro.classList.add('level2');
-        levelIntro.style.display = 'flex';
-
         document.getElementById('scene1').style.display = 'none';
         currentScene = document.getElementById('scene2');
         currentCar = document.getElementById('car2');
@@ -262,25 +271,32 @@
         currentCarVisual = currentCar.querySelector('#carVisual');
         hudLevel = currentScene.querySelector('#hudLevel');
         hudTime = currentScene.querySelector('#hudTime');
+        vrLevelHint = currentScene.querySelector('#vrLevelHint');
+        vrHintText = currentScene.querySelector('#vrHintText');
         currentScene.style.display = 'block';
 
         currentLevel = 2;
         holeProbability = 0.038;
         time = 0;
-        infoLevel.textContent = '2';
-        infoTime.textContent = '0';
 
         initRoad();
 
         setTimeout(() => {
-          levelIntro.style.opacity = '0';
-          setTimeout(() => {
-            levelIntro.style.display = 'none';
-            levelIntro.style.opacity = '1';
-            gameActive = true;
-            updateGame();
-          }, 1200);
-        }, 2800);
+          showVRLevelHint("LEVEL 2\nHARDER MODE", "#ffcc00");
+          gameActive = true;
+          updateGame();
+        }, 800);
+      }
+
+      function showVRLevelHint(text, color) {
+        if (!vrHintText) return;
+        vrHintText.setAttribute('value', text);
+        vrHintText.setAttribute('color', color);
+        vrLevelHint.setAttribute('visible', 'true');
+
+        setTimeout(() => {
+          vrLevelHint.setAttribute('visible', 'false');
+        }, 3200);
       }
 
       function initRoad() {
@@ -410,16 +426,15 @@
 
         const carPos = currentCar.getAttribute('position');
         const camera = currentScene.querySelector('a-camera');
-        const cameraRot = camera.getAttribute('rotation');
+        const cameraObj = camera.object3D;
+        const yaw = -cameraObj.rotation.y * (180 / Math.PI);
 
-        const yaw = -cameraRot.y * (Math.PI / 180);
-        const moveX = Math.sin(yaw) * turnSpeed;
+        const moveX = Math.sin(yaw * Math.PI / 180) * turnSpeed;
 
         carPos.x += moveX;
         carPos.x = Math.max(-9, Math.min(9, carPos.x));
         currentCar.setAttribute('position', carPos);
 
-        // === Car visual rotation (works in VR + desktop) ===
         if (currentCarVisual) {
           let targetRotation = 90;
           if (Math.abs(moveX) > 0.001) {
@@ -459,9 +474,19 @@
 
       function endGame() {
         gameActive = false;
+
+        const sceneEl = currentScene;
+        const vrGameOverText = document.createElement('a-text');
+        vrGameOverText.setAttribute('value', 'GAME OVER\nExit VR to restart');
+        vrGameOverText.setAttribute('color', '#ff4444');
+        vrGameOverText.setAttribute('align', 'center');
+        vrGameOverText.setAttribute('width', '2.2');
+        vrGameOverText.setAttribute('position', '0 1.4 -2.5');
+        sceneEl.appendChild(vrGameOverText);
+
         document.getElementById('finalTime').textContent = time.toFixed(1);
         document.getElementById('finalLevel').textContent = `Level ${currentLevel}`;
-        document.getElementById('gameOver').style.display = 'flex';
+        gameOverScreen.style.display = 'flex';
       }
 
       function restartGame() {
