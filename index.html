@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Survival Road Game</title>
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe-physics-system@4.0.1/dist/aframe-physics-system.min.js"></script>
+    <style>
+      body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; }
+
+      #introScreen, #levelIntro, #loadingScreen, #gameOver {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        display: flex; flex-direction: column; justify-content: center; align-items: center;
+        text-align: center; z-index: 300;
+      }
+      #introScreen { background: linear-gradient(to bottom, rgba(0,0,0,0.95), rgba(20,20,40,0.98)); color: white; }
+      #introScreen h1 { font-size: 72px; margin: 0 0 20px 0; text-shadow: 0 0 30px #ff5733; letter-spacing: 4px; }
+      #introScreen .player-info { font-size: 28px; margin: 15px 0; opacity: 0.9; }
+      #introScreen .subtitle { font-size: 22px; margin-top: 40px; opacity: 0.7; }
+
+      #levelIntro { background: rgba(0,0,0,0.92); transition: opacity 1.2s ease-out; }
+      #levelIntro h2 { font-size: 80px; margin: 0; letter-spacing: 8px; }
+      #levelIntro p { font-size: 28px; margin-top: 20px; opacity: 0.85; }
+      #levelIntro.level1 { color: #4CAF50; }
+      #levelIntro.level1 h2 { text-shadow: 0 0 40px #4CAF50; }
+      #levelIntro.level2 { color: #ffcc00; }
+      #levelIntro.level2 h2 { text-shadow: 0 0 40px #ff5733; }
+
+      #loadingScreen { background-color: rgba(0,0,0,0.85); color: white; }
+      #gameOver { background-color: rgba(0,0,0,0.9); color: white; }
+
+      #info {
+        position: absolute; top: 10px; left: 10px; color: white;
+        background-color: rgba(0,0,0,0.6); padding: 10px 15px;
+        border-radius: 5px; font-size: 18px; z-index: 100; display: flex; gap: 20px;
+      }
+      #muteBtn {
+        position: absolute; top: 10px; right: 10px; z-index: 100;
+        background: rgba(0,0,0,0.6); color: white; border: none; padding: 8px 14px;
+        border-radius: 5px; cursor: pointer; font-size: 16px;
+      }
+      button { background-color: #4CAF50; border: none; color: white; padding: 14px 40px; font-size: 22px; margin-top: 30px; cursor: pointer; border-radius: 8px; }
+      .spinner { border: 6px solid rgba(255,255,255,0.3); border-top: 6px solid white; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-top: 20px; }
+      @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+  </head>
+  <body>
+
+    <!-- Loading -->
+    <div id="loadingScreen">
+      <h2 id="loadingText">Loading Game...</h2>
+      <p>Please wait</p>
+      <div class="spinner"></div>
+    </div>
+
+    <!-- Splash -->
+    <div id="introScreen" style="display:none">
+      <h1>SURVIVAL ROAD</h1>
+      <div class="player-info">Runner: <strong>makentake</strong></div>
+      <div class="subtitle">Survive as long as you can...</div>
+    </div>
+
+    <!-- Level Intro -->
+    <div id="levelIntro" style="display:none">
+      <h2 id="levelTitle">LEVEL 1</h2>
+      <p id="levelSubtitle">SURVIVE 30 SECONDS</p>
+    </div>
+
+    <!-- Game UI -->
+    <div id="info">
+      <span>Level <span id="levelNum">1</span></span>
+      <span>Time: <span id="time">0</span>s</span>
+    </div>
+
+    <button id="muteBtn">🔊 Music On</button>
+
+    <div id="gameOver" style="display:none">
+      <h2>Game Over!</h2>
+      <p>You reached <span id="finalLevel">Level 1</span> and survived <span id="finalTime">0</span> seconds.</p>
+      <button onclick="restartGame()">Play Again</button>
+    </div>
+
+    <!-- LEVEL 1 SCENE -->
+    <a-scene id="scene1" physics="debug: false" loading-screen="enabled: false" 
+             vr-mode-ui="enabled: true" style="display:none">
+      <a-assets>
+        <a-asset-item id="carModel" src="car.glb"></a-asset-item>
+        <a-asset-item id="building1" src="building1.glb"></a-asset-item>
+        <a-asset-item id="building2" src="building2.glb"></a-asset-item>
+      </a-assets>
+
+      <a-entity id="car1" position="0 0.5 0">
+        <a-entity id="carVisual" gltf-model="#carModel" scale="2 2 2" position="0 0.4 1.8" rotation="0 90 0"></a-entity>
+        <a-entity position="0 0.3 2.75"><a-camera look-controls="pointerLockEnabled: true"></a-camera></a-entity>
+      </a-entity>
+
+      <a-entity id="road1"></a-entity>
+      <a-plane position="0 -10 0" rotation="-90 0 0" width="200" height="200" color="#222" static-body visible="false"></a-plane>
+      <a-sky color="#87CEEB"></a-sky>
+      <a-light type="ambient" color="#BBB" intensity="0.4"></a-light>
+      <a-light type="directional" color="#FFF" intensity="0.8" position="-1 3 2"></a-light>
+    </a-scene>
+
+    <!-- LEVEL 2 SCENE -->
+    <a-scene id="scene2" physics="debug: false" loading-screen="enabled: false" 
+             vr-mode-ui="enabled: true" style="display:none">
+      <a-assets>
+        <a-asset-item id="carModel" src="car.glb"></a-asset-item>
+        <a-asset-item id="building1" src="building1.glb"></a-asset-item>
+        <a-asset-item id="building2" src="building2.glb"></a-asset-item>
+      </a-assets>
+
+      <a-entity id="car2" position="0 0.5 0">
+        <a-entity id="carVisual" gltf-model="#carModel" scale="2 2 2" position="0 0.4 1.8" rotation="0 90 0"></a-entity>
+        <a-entity position="0 0.3 2.75"><a-camera look-controls="pointerLockEnabled: true"></a-camera></a-entity>
+      </a-entity>
+
+      <a-entity id="road2"></a-entity>
+      <a-plane position="0 -10 0" rotation="-90 0 0" width="200" height="200" color="#222" static-body visible="false"></a-plane>
+      <a-sky color="#112233"></a-sky>
+      <a-light type="ambient" color="#BBB" intensity="0.4"></a-light>
+      <a-light type="directional" color="#FFF" intensity="0.8" position="-1 3 2"></a-light>
+    </a-scene>
+
+    <!-- AUDIO -->
+    <audio id="bgMusic" loop preload="auto"></audio>
+    <audio id="winSound" preload="auto"></audio>
+    <audio id="loseSound" preload="auto"></audio>
+
+    <script>
+      let gameActive = false;
+      let time = 0;
+      let currentLevel = 1;
+      let roadSegments = [];
+      let decorations = [];
+      let currentScene, currentCar, currentRoad, currentCarVisual;
+      let lastRowHadBuildings = false;
+
+      const segmentLength = 15;
+      const roadWidth = 21;
+      const segmentWidth = 4.2;
+      let holeProbability = 0.015;
+      const level1TimeGoal = 30;
+      const roadSpeed = 0.38;
+      const turnSpeed = 0.22;
+
+      const infoLevel = document.getElementById('levelNum');
+      const infoTime = document.getElementById('time');
+      const levelIntro = document.getElementById('levelIntro');
+      const levelTitle = document.getElementById('levelTitle');
+      const levelSubtitle = document.getElementById('levelSubtitle');
+      const loadingScreen = document.getElementById('loadingScreen');
+      const introScreen = document.getElementById('introScreen');
+      const muteBtn = document.getElementById('muteBtn');
+
+      const bgMusic = document.getElementById('bgMusic');
+      const winSound = document.getElementById('winSound');
+      const loseSound = document.getElementById('loseSound');
+
+      let musicMuted = false;
+
+      function setupAudio() {
+        bgMusic.src = "AchtungPanzer.wav";
+        winSound.src = "winSound.mp3";
+        loseSound.src = "loseSound.mp3";
+        bgMusic.volume = 0.65;
+      }
+
+      muteBtn.addEventListener('click', () => {
+        musicMuted = !musicMuted;
+        bgMusic.muted = musicMuted;
+        muteBtn.textContent = musicMuted ? "🔇 Music Off" : "🔊 Music On";
+      });
+
+      function startGameFlow() {
+        loadingScreen.style.display = 'flex';
+        setTimeout(() => {
+          loadingScreen.style.display = 'none';
+          showMainIntro();
+        }, 1100);
+      }
+
+      function showMainIntro() {
+        introScreen.style.display = 'flex';
+        setTimeout(() => {
+          introScreen.classList.add('fade-out');
+          setTimeout(() => {
+            introScreen.style.display = 'none';
+            startLevel1();
+          }, 1500);
+        }, 2800);
+      }
+
+      function startLevel1() {
+        loadingScreen.style.display = 'flex';
+        document.getElementById('loadingText').textContent = 'Loading Level 1...';
+
+        currentScene = document.getElementById('scene1');
+        currentCar = document.getElementById('car1');
+        currentRoad = document.getElementById('road1');
+        currentCarVisual = currentCar.querySelector('#carVisual');
+
+        currentScene.style.display = 'block';
+        initRoad();
+
+        currentCar.setAttribute('position', '0 0.5 0');
+
+        setTimeout(() => {
+          loadingScreen.style.display = 'none';
+          showLevel1Intro();
+        }, 600);
+      }
+
+      function showLevel1Intro() {
+        levelTitle.textContent = "LEVEL 1";
+        levelSubtitle.textContent = "SURVIVE 30 SECONDS";
+        levelIntro.classList.add('level1');
+        levelIntro.style.display = 'flex';
+
+        setTimeout(() => {
+          levelIntro.style.opacity = '0';
+          setTimeout(() => {
+            levelIntro.style.display = 'none';
+            levelIntro.style.opacity = '1';
+            gameActive = true;
+            bgMusic.play().catch(() => {});
+            updateGame();
+          }, 1200);
+        }, 2800);
+      }
+
+      function transitionToLevel2() {
+        gameActive = false;
+        winSound.play().catch(() => {});
+
+        levelTitle.textContent = "LEVEL 2";
+        levelSubtitle.textContent = "HARDER MODE";
+        levelIntro.classList.add('level2');
+        levelIntro.style.display = 'flex';
+
+        document.getElementById('scene1').style.display = 'none';
+        currentScene = document.getElementById('scene2');
+        currentCar = document.getElementById('car2');
+        currentRoad = document.getElementById('road2');
+        currentCarVisual = currentCar.querySelector('#carVisual');
+        currentScene.style.display = 'block';
+
+        currentLevel = 2;
+        holeProbability = 0.038;
+        time = 0;
+        infoLevel.textContent = '2';
+        infoTime.textContent = '0';
+
+        initRoad();
+
+        setTimeout(() => {
+          levelIntro.style.opacity = '0';
+          setTimeout(() => {
+            levelIntro.style.display = 'none';
+            levelIntro.style.opacity = '1';
+            gameActive = true;
+            updateGame();
+          }, 1200);
+        }, 2800);
+      }
+
+      function initRoad() {
+        currentRoad.innerHTML = '';
+        roadSegments = [];
+        decorations = [];
+        lastRowHadBuildings = false;
+
+        for (let z = 30; z > -380; z -= segmentLength) {
+          createRoadRow(z);
+          if (!lastRowHadBuildings) {
+            addDecorations(z);
+            lastRowHadBuildings = true;
+          } else {
+            lastRowHadBuildings = false;
+          }
+        }
+      }
+
+      function createRoadRow(z) {
+        const half = roadWidth / 2;
+        const color = currentLevel === 1 ? '#444444' : '#2a2a2a';
+
+        for (let x = -half + segmentWidth/2; x < half; x += segmentWidth) {
+          const seg = document.createElement('a-plane');
+          seg.setAttribute('width', segmentWidth);
+          seg.setAttribute('height', segmentLength);
+          seg.setAttribute('position', `${x} 0 ${z}`);
+          seg.setAttribute('rotation', '-90 0 0');
+          seg.setAttribute('color', color);
+          seg.setAttribute('static-body', '');
+          currentRoad.appendChild(seg);
+          roadSegments.push(seg);
+        }
+      }
+
+      function addDecorations(z) {
+        const leftModel = Math.random() > 0.5 ? '#building1' : '#building2';
+        const left = document.createElement('a-entity');
+        left.setAttribute('gltf-model', leftModel);
+        left.setAttribute('scale', '7 7 7');
+        left.setAttribute('position', `-23 0 ${z}`);
+        currentRoad.appendChild(left);
+        decorations.push(left);
+
+        const rightModel = Math.random() > 0.5 ? '#building1' : '#building2';
+        const right = document.createElement('a-entity');
+        right.setAttribute('gltf-model', rightModel);
+        right.setAttribute('scale', '7 7 7');
+        right.setAttribute('position', `23 0 ${z}`);
+        right.setAttribute('rotation', '0 180 0');
+        currentRoad.appendChild(right);
+        decorations.push(right);
+      }
+
+      function manageRoad() {
+        for (let i = roadSegments.length - 1; i >= 0; i--) {
+          const seg = roadSegments[i];
+          let pos = seg.getAttribute('position');
+          pos.z += roadSpeed;
+          seg.setAttribute('position', pos);
+          if (pos.z > 40) {
+            seg.parentNode.removeChild(seg);
+            roadSegments.splice(i, 1);
+          }
+        }
+
+        for (let i = decorations.length - 1; i >= 0; i--) {
+          const deco = decorations[i];
+          let pos = deco.getAttribute('position');
+          pos.z += roadSpeed;
+          deco.setAttribute('position', pos);
+          if (pos.z > 70) {
+            deco.parentNode.removeChild(deco);
+            decorations.splice(i, 1);
+          }
+        }
+
+        const farthest = roadSegments.length > 0 
+          ? Math.min(...roadSegments.map(s => s.getAttribute('position').z))
+          : -100;
+
+        if (farthest > -190) {
+          createRoadRow(farthest - segmentLength);
+          if (!lastRowHadBuildings) {
+            addDecorations(farthest - segmentLength);
+            lastRowHadBuildings = true;
+          } else {
+            lastRowHadBuildings = false;
+          }
+        }
+      }
+
+      function removeRandomRoadSegment() {
+        if (roadSegments.length === 0) return;
+        const carPos = currentCar.getAttribute('position');
+
+        let candidates = roadSegments.filter(seg => {
+          const p = seg.getAttribute('position');
+          return p.z < carPos.z - 18 && p.z > carPos.z - 80;
+        });
+
+        const safe = candidates.filter(seg => {
+          const z = seg.getAttribute('position').z;
+          const count = roadSegments.filter(s => Math.abs(s.getAttribute('position').z - z) < 1).length;
+          return count > 2;
+        });
+
+        candidates = safe.length > 0 ? safe : candidates;
+        if (candidates.length === 0) return;
+
+        const toRemove = candidates[Math.floor(Math.random() * candidates.length)];
+        const idx = roadSegments.indexOf(toRemove);
+        if (idx > -1) {
+          toRemove.parentNode.removeChild(toRemove);
+          roadSegments.splice(idx, 1);
+        }
+      }
+
+      function updateGame() {
+        if (!gameActive) return;
+
+        time += 0.016;
+        infoTime.textContent = time.toFixed(1);
+
+        const carPos = currentCar.getAttribute('position');
+        const camera = currentScene.querySelector('a-camera');
+        const cameraRot = camera.getAttribute('rotation');
+
+        // Calculate movement direction from camera yaw
+        const yaw = -cameraRot.y * (Math.PI / 180);
+        const moveX = Math.sin(yaw) * turnSpeed;
+
+        carPos.x += moveX;
+        carPos.x = Math.max(-9, Math.min(9, carPos.x));
+        currentCar.setAttribute('position', carPos);
+
+        // === BETTER CAR VISUAL ROTATION ===
+        if (currentCarVisual) {
+          // Use the actual movement direction to determine rotation
+          // This prevents inversion and feels more natural
+          let targetRotation = 90; // base forward facing
+          
+          if (Math.abs(moveX) > 0.001) {
+            // Convert sideways velocity to rotation angle
+            const steerAngle = Math.atan2(moveX, turnSpeed) * (180 / Math.PI);
+            targetRotation = 90 - steerAngle;   // +90 base offset + steering
+          }
+          
+          currentCarVisual.setAttribute('rotation', `0 ${targetRotation} 0`);
+        }
+
+        manageRoad();
+        if (Math.random() < holeProbability) removeRandomRoadSegment();
+
+        if (currentLevel === 1 && time >= level1TimeGoal) {
+          transitionToLevel2();
+          return;
+        }
+
+        let onRoad = false;
+        for (const seg of roadSegments) {
+          const segPos = seg.getAttribute('position');
+          if (Math.abs(carPos.x - segPos.x) < segmentWidth / 2 + 0.9 &&
+              Math.abs(carPos.z - segPos.z) < segmentLength / 2 + 2.2) {
+            onRoad = true;
+            break;
+          }
+        }
+
+        if (!onRoad || carPos.y < -5) {
+          bgMusic.pause();
+          loseSound.play().catch(() => {});
+          endGame();
+          return;
+        }
+
+        requestAnimationFrame(updateGame);
+      }
+
+      function endGame() {
+        gameActive = false;
+        document.getElementById('finalTime').textContent = time.toFixed(1);
+        document.getElementById('finalLevel').textContent = `Level ${currentLevel}`;
+        document.getElementById('gameOver').style.display = 'flex';
+      }
+
+      function restartGame() {
+        location.reload();
+      }
+
+      window.addEventListener('load', () => {
+        setupAudio();
+        startGameFlow();
+      });
+    </script>
+  </body>
+</html>
