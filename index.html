@@ -193,13 +193,13 @@
           loadingScreen.style.display = 'none';
           showVRLevelHint("LEVEL 1\nSURVIVE 30 SECONDS", "#4CAF50");
           gameActive = true;
-          bgMusic.play().catch(() => {});   // music now plays after interaction
+          bgMusic.play().catch(() => {});
           updateGame();
         }, 600);
       }
 
       function transitionToLevel2() {
-        gameActive = false;   // pause during transition
+        gameActive = false; // pause during transition
         winSound.play().catch(() => {});
 
         document.getElementById('scene1').style.display = 'none';
@@ -232,8 +232,11 @@
         vrHintText.setAttribute('color', color);
         vrLevelHint.setAttribute('visible', 'true');
 
+        // Keep game paused during hint
         setTimeout(() => {
           vrLevelHint.setAttribute('visible', 'false');
+          // Only unpause if we were paused for the hint
+          if (!gameActive) gameActive = true;
         }, 3200);
       }
 
@@ -364,7 +367,7 @@
         const carPos = currentCar.getAttribute('position');
         const camera = currentScene.querySelector('a-camera');
 
-        // === RELIABLE YAW FOR DESKTOP + VR ===
+        // === MOST RELIABLE YAW FOR VR + DESKTOP ===
         let yawDegrees = 0;
         const lookControls = camera.components['look-controls'];
         if (lookControls && lookControls.yawObject) {
@@ -422,7 +425,7 @@
 
         const sceneEl = currentScene;
         const vrGameOver = document.createElement('a-entity');
-        vrGameOver.setAttribute('position', '0 1.4 -2.5');
+        vrGameOver.setAttribute('position', '0 1.4 -2.5'); // attached to camera rig
 
         const bg = document.createElement('a-plane');
         bg.setAttribute('width', '2.4');
